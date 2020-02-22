@@ -1,0 +1,110 @@
+				= = =   DETALII IMPLEMENTARE   = = = 
+
+
+1. myParser:
+============
+
+Functia "parse":
+----------------
+	Pentru a parsa stringul primit ca input de catre program am folosit o stiva. 
+Astfel daca primesc orice simbol din alfabet atunci creez un obiect de tip "RegEx"
+si il pun pe stiva. Cand primesc un simbol din multimea {*, ?, +} scot ultimul
+element de pe stiva si formez noul obiect "RegEx" pe care il pun pe stiva (se 
+garanteaza ca stiva nu este goala la primirea unui astfel de simbol). Avem doua
+cazuri particulare: "[]"" si "{}".
+	Atunci cand intalnesc simbolul "[" atunci stiu sigur ca ceea ce urmeaza pana
+la primirea simbolului "]" trebuie sa fie un obiect de tip "RegEx -> SYMBOL_SET".
+Asadar creez un set() conform explicatiilor din cerinta temei pe care apoi il 
+dau ca parametru constructorului clasei "RegEx". In cazul simbolului "{" trebuie
+sa creez un obiect de tip "Regex -> RANGE" valorile min si max fiind determinate
+de continutul acoladelor.
+	Tot pe stiva sunt puse si simbolurile "|" si ")", "(" ca si stringuri. In cazul
+parantezelor, atunci cand primesc ")" din toate elementele de pe stiva (pana la
+intalnirea caracterului "(" ) formez un singur obiect "RegEx" pe care il adaug
+pe stiva. Simbolul "|" l-am tratat separat astfel:
+	La final(cand am parcurs tot inputul) incep sa scot elemente din stiva(cate
+doua) pana cand stiva devine goala. Cand ambele elemente sunt obiecte de tip 
+"RegEx" atunci le concatenez si noul "RegEx" il pun pe stiva. Daca, pe de alta
+parte, al doilea element este "|" atunci stiu sigur ca primul element scos va fi 
+ALTERNAT cu ceea ce este pe stiva dupa simbolul "|", asadar il adaug intr-o noua
+stiva. Apoi, pana cand cea dea doua stiva mai are un singur element, scot cate 
+doua elemente si le "ALTERNEZ". 
+	Rezultatul functiei este dat de ultimul obiect de tip "RegEx" ramas pe cea
+dea doua stiva.
+
+Functia "convert_to_re":
+------------------------
+
+	La conversia unui obiect "RegEx" intr-o "RegularExpression" am luat in consi-
+derare urmatoarele diferente pe care nu se putea aplica algoritmul de conversie
+Thompson.
+1. MAYBE ("?") 	 ---> l-am transformat in "epsilon | regex.lhs"
+2. PLUS  ("+")   ---> l-am transformat in "regex.lhs regex.lhs*"
+
+
+3. SYMBOL_ANY (".") 	 ---> in acest caz am ALTERNAT fiecare simbol din alfabet
+si am creat o singura expresie regulata.
+
+4. SYMBOL_SET ("[...]")  ---> aici am creat o singura expresie regulata prin 
+ALTERNAREA tutror simbolurilor din set-ul obiectului "RegEx" (format fie din 
+simboluri, fie din tupluri - ce reprezinta un range de caractere).
+
+5. RANGE 	  ("{.,.}")	 ---> avem 3 cazuri:
+
+a. {a,b}  - pentru fiecare "i" cu a <= i <= b am concatenat regex.lhs de "i" ori,
+iar apoi am alternat toate expresiile regulate create intr-o expresie regulata
+finala.
+b. {,b}   - la fel ca mai sus, dar 0 <= i <= b.
+c. {a,}	  - i >= a. Am concatenat regex.lhs de "a" ori, iar apoi expresia regulata
+obtinuta am concatenat-o cu RegularExpression(STAR, regex.lhs) ---> xxx..xx*.
+																   |--a--| 
+
+================================================================================
+
+
+2. test:
+========
+
+Functiile "rename_states" si "new_states" sunt functiile din laboratorul 3.
+		  ---------------    ------------
+
+Functia "re_to_nfa" este algoritmul lui Thompson invatat in laboratorul 3.
+		-----------
+
+
+Functia convert_nfa_to_dfa:
+---------------------------
+---> functii ajutatoare <----
+
+a. "epsilon_closure"    - primeste ca parametrii un nfa si un set de stari si 
+calculeaza inchiderile epsilon pentru acel set de stari.
+b. "get_state_on_char"  - primeste ca parametrii un nfa, o stare a DFA-ului (care
+este formata dintr-o multime de stari din NFA) si un caracter. Returneaza multimea
+de stari in care se poate ajunge in NFA pe caracterul primit ca parametru.
+
+!!! Pentru a transforma un NFA intr-un DFA am procedat astfel:
+	
+	Initial start_state_DFA reprezinta inchiderea epsilon peste start_state_NFA
+(starea de inceput din DFA este formata din inchiderea epsilon peste starea initiala
+din NFA).
+Am retinut de asemenea ce stari din noul DFA au fost deja vizitate (o stare o 
+marchez ca si vizitata atunci cand pentru fiecare caracter din alfabet construiesc
+tranzitiile corespunzatoare pentru DFA din acea stare).
+	Cat timp mai am stari in DFA care nu sunt vizitate aleg o stare nevizitata si 
+calculez delta_DFA astfel: pentru fiecare caracter din alfabet aplic functia
+"get_state_on_char" => starile pe care se poate ajunge in NFA pe acel caracter.
+Apoi aplic functia "epsilon_closure" peste multimea de stari => starea urmatoare
+in DFA pe care se ajunge din starea nevizitata aleasa anterior pe caracterul actual
+din alfabet. Adaug noua stare in multimea starilor pentru DFA, o adaug si in 
+dictionar ca stare nevizitata si adaug tranzitia in delta_DFA. Apoi marchez
+starea aleasa anterior ca si VIZITATA.
+	La final parcurg toate starile din DFA si pentru fiecare stare care contine 
+cel putin o stare finala din NFA, marchez starea ca si finala.
+	
+
+Functia start_DFA:
+------------------
+	Functia primeste ca parametru un dfa si un cuvant si parcurge parcurge 
+automatul pe cuvantul primit. Daca la terminarea cuvantului, automatul ajunge
+intr-o stare finala atunci AUTOMATUL FINIT DETERMINIST accepta cuvantul si intorce
+"True", altfel intorce "False".
