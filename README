@@ -30,7 +30,7 @@ ALTERNAT cu ceea ce este pe stiva dupa simbolul "|", asadar il adaug intr-o noua
 stiva. Apoi, pana cand cea dea doua stiva mai are un singur element, scot cate 
 doua elemente si le "ALTERNEZ". 
 	Rezultatul functiei este dat de ultimul obiect de tip "RegEx" ramas pe cea
-dea doua stiva.
+de-a doua stiva.
 
 Functia "convert_to_re":
 ------------------------
